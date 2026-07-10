@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CBT EXAM SUITE PRO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .q-btn { width: 38px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; border: 1px solid #ccc; background: #fff; }
+        .status-answered { background: #27ae60; color: #fff; border-radius: 0 0 12px 12px; }
+        .status-not-answered { background: #e74c3c; color: #fff; border-radius: 12px 12px 0 0; }
+        .status-review { background: #8e44ad; color: #fff; border-radius: 50%; }
+        .status-review-answered { background: #8e44ad; color: #fff; border-radius: 50%; position: relative; }
+        .status-review-answered::after { content: '✔'; position: absolute; bottom: -2px; right: -2px; color: #2ecc71; font-size: 10px; background: white; border-radius: 50%; width: 12px; height: 12px; display: flex; align-items: center; justify-content: center; }
+        .active-sec { background: #fff !important; color: #1e3a8a !important; font-weight: bold; border-top: 4px solid #f39c12; }
+        .disabled-tab { opacity: 0.4; cursor: not-allowed !important; pointer-events: none; }
+        .correct-eclipse { border: 2px solid #27ae60; background-color: #ebf7ee; border-radius: 8px; position: relative; }
+        .wrong-eclipse { border: 2px solid #e74c3c; background-color: #fdf2f2; border-radius: 8px; position: relative; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-sm selection:bg-blue-200">
+
+<div id="app">
+    <nav class="bg-white shadow-md flex justify-center space-x-12 p-3 fixed top-0 w-full z-50">
+        <button id="nav-test" class="font-bold border-b-2 border-blue-600 text-blue-600 px-4">EXAM INTERFACE</button>
+        <button id="nav-score" class="font-bold text-gray-400 px-4 disabled-tab" disabled>SCOREBOARD ANALYTICS</button>
+    </nav>
+
+    <div class="pt-16">
+        <div id="tab-test-ui">
+            <div id="step-upload" class="flex flex-col items-center justify-center min-h-[90vh] px-4 py-8">
+                <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md relative border border-gray-200">
+                    <button onclick="openAdminSettingsModal()" class="absolute top-4 right-4 text-gray-400 hover:text-blue-600 text-xs font-bold transition flex items-center gap-1">🛠️ Settings</button>
+                    
+                    <div class="border-b pb-2 mb-4">
+                        <h2 class="text-xl font-bold text-blue-900">Portal Authentication</h2>
+                        <p class="text-xs text-gray-400 mt-0.5">Select your exam platform profile metrics to log in</p>
+                    </div>
+
+                    <label class="block text-xs font-bold mb-1 text-gray-600">SELECT INSTALLED EXAM TARGET</label>
+                    <select id="examSetupTypeSelector" class="w-full p-3 border rounded mb-3 outline-none focus:ring-2 focus:ring-blue-400 bg-white text-xs font-bold text-gray-700">
+                        <option value="SSC">SSC (SYSTEM TEMPLATE MAP)</option>
+                        <option value="RRB">RRB (SYSTEM TEMPLATE MAP)</option>
+                        <option value="IBPS CLERK">IBPS CLERK (SYSTEM TEMPLATE MAP)</option>
+                    </select>
+
+                    <label class="block text-xs font-bold mb-1 text-gray-600">SELECT CANDIDATE MOCK PROFILE</label>
+                    <select id="candSelectBox" class="w-full p-3 border rounded mb-3 outline-none focus:ring-2 focus:ring-blue-400 bg-white text-xs">
+                        <option value="">-- RETRIEVING LIVE MASTER ROSTER --</option>
+                    </select>
+
+                    <label class="block text-xs font-bold mb-1 text-gray-600">SECURITY PIN PASSWORD</label>
+                    <input type="password" id="studentPasswordInput" placeholder="••••••••" class="w-full p-3 border rounded mb-4 outline-none focus:ring-2 focus:ring-blue-400 tracking-widest text-center">
+
+                    <button onclick="executeUnifiedLoginSequence()" id="mainLoginBtn" class="w-full bg-blue-700 text-white py-3 rounded font-black hover:bg-blue-800 transition tracking-wider text-xs shadow shadow-blue-300">
+                        LAUNCH PORTAL SESSION
+                    </button>
+
+                    <div class="mt-4 pt-3 border-t text-center">
+                        <p class="text-xs text-gray-500">New Student? <button onclick="openRegistrationModal()" class="text-blue-600 font-bold underline hover:text-blue-800">Register Profile Here</button></p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="step-instructions" class="hidden max-w-5xl mx-auto bg-white shadow-lg mt-4 rounded-xl overflow-hidden border">
+                <div class="p-4 bg-gray-50 border-b font-bold text-blue-900 tracking-wide border-gray-200">GENERAL PORTAL DIRECTIVES</div>
+                <div class="p-8 h-[60vh] overflow-y-auto space-y-4 text-gray-700 text-xs leading-relaxed text-justify">
+                    <h3 class="font-bold text-sm text-gray-800 border-b pb-1">Please evaluate active configurations before initialization:</h3>
+                    <p>1. The timer infrastructure operates under structural sync regulations embedded in your script.</p>
+                    <p>2. Answer updates are backed up automatically to the online network cloud database sheet to secure your progress against hardware crashes.</p>
+                    <div id="resume-alert-box" class="hidden p-4 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-lg font-bold text-xs shadow-inner animate-pulse">
+                        🌐 CLOUD PROGRESS DETECTED: An uncompleted active session was recovered from the online database for your account profile. Clicking NEXT will safely restore your questions.
+                    </div>
+                    <div id="active-configuration-summary" class="p-3 bg-blue-50 border border-blue-200 rounded font-semibold text-blue-900"></div>
+                </div>
+                <div class="p-4 bg-gray-50 border-t border-gray-200 flex justify-end">
+                    <button onclick="showStep('step-lang')" class="bg-blue-600 text-white px-10 py-2 rounded font-bold hover:bg-blue-700 text-xs shadow">CONFIRM & ADVANCE</button>
+                </div>
+            </div>
+
+            <div id="step-lang" class="hidden flex items-center justify-center min-h-[70vh]">
+                <div class="bg-white p-10 rounded shadow-lg text-center w-96 border">
+                    <p class="mb-4 font-semibold text-gray-700 text-xs uppercase tracking-wider">Select Examination Core Language</p>
+                    <select id="langSel" class="w-full p-2 border rounded mb-8 text-xs font-bold text-gray-600"><option>ENGLISH</option><option>HINDI</option></select>
+                    <button onclick="startExam()" class="w-full bg-cyan-600 text-white py-3 rounded font-bold hover:bg-cyan-700 text-xs transition uppercase tracking-widest shadow">I am ready to begin</button>
+                </div>
+            </div>
+
+            <div id="exam-interface" class="hidden fixed inset-0 bg-gray-200 flex flex-col pt-14">
+                <div class="bg-white border-b p-3 flex justify-between items-center px-6 shadow-sm border-gray-200">
+                    <span id="live-platform-title" class="font-bold text-blue-900 tracking-tight text-xs">CBT TESTING ENGINE PLATFORM</span>
+                    <div id="timer" class="font-mono text-2xl font-bold bg-yellow-100 px-4 py-1 border border-yellow-300 rounded-lg shadow-sm">00:00:00</div>
+                </div>
+                <div class="flex flex-grow overflow-hidden">
+                    <div class="flex-grow flex flex-col bg-white border-r border-gray-200">
+                        <div id="section-bar" class="bg-blue-900 flex text-white text-[11px] font-bold">
+                            <button onclick="switchSec('A')" id="btn-A" class="px-6 py-3 border-r border-blue-800 tracking-wider">PART A</button>
+                            <button onclick="switchSec('B')" id="btn-B" class="px-6 py-3 border-r border-blue-800 tracking-wider">PART B</button>
+                            <button onclick="switchSec('C')" id="btn-C" class="px-6 py-3 border-r border-blue-800 tracking-wider">PART C</button>
+                            <button onclick="switchSec('D')" id="btn-D" class="px-6 py-3 border-r border-blue-800 tracking-wider">PART D</button>
+                        </div>
+                        <div class="p-8 overflow-y-auto flex-grow bg-white">
+                            <div class="flex justify-between border-b pb-2 mb-6 border-gray-100">
+                                <span id="sec-title" class="font-bold text-blue-800 text-xs"></span>
+                                <span class="font-bold text-gray-400 text-xs">QUESTION: <span id="q-num" class="text-black text-sm">1</span></span>
+                            </div>
+                            <div id="q-body" class="text-sm mb-8 text-gray-800 leading-relaxed flex flex-col gap-4"></div>
+                            <div id="opt-list" class="space-y-3 max-w-3xl"></div>
+                        </div>
+                        <div class="p-4 bg-gray-50 border-t border-gray-200 flex justify-between shadow-inner">
+                            <div class="space-x-2">
+                                <button id="review-action-btn" onclick="markForReview()" class="bg-white border border-blue-900 text-blue-900 px-4 py-2 rounded text-xs font-bold shadow-sm hover:bg-gray-50">MARK REVIEW & NEXT</button>
+                                <button id="clear-action-btn" onclick="clearResponse()" class="bg-white border border-gray-400 text-gray-700 px-4 py-2 rounded text-xs font-bold shadow-sm hover:bg-gray-50">CLEAR RESPONSE</button>
+                            </div>
+                            <button id="save-action-btn" onclick="saveAndNext()" class="bg-blue-700 text-white px-10 py-2 rounded font-bold hover:bg-blue-800 text-xs shadow shadow-blue-200">SAVE & NEXT</button>
+                        </div>
+                    </div>
+                    <div class="w-80 bg-gray-50 flex flex-col border-l border-gray-200">
+                        <div class="p-4 bg-white border-b border-gray-200 font-bold text-gray-700 flex items-center text-xs" id="user-display"></div>
+                        <div id="palette-box" class="p-4 grid grid-cols-4 gap-2 overflow-y-auto flex-grow content-start"></div>
+                        <div class="p-4 border-t border-gray-200 bg-white"><button onclick="finalSubmit()" class="w-full bg-green-600 text-white py-3 rounded font-bold hover:bg-green-700 text-xs shadow">SUBMIT TOTAL EXAMINATION</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-score-ui" class="hidden p-8 min-h-screen bg-gray-50">
+            <div class="max-w-5xl mx-auto space-y-8">
+                <div class="bg-white p-6 rounded-xl shadow-md flex justify-between items-center border-t-4 border-blue-600 border border-gray-200">
+                    <div>
+                        <h2 class="text-xl font-black text-blue-950">PERFORMANCE ASSESSMENT SUMMARY</h2>
+                        <p class="text-[11px] text-gray-400 mt-0.5">Evaluation Matrix Processing Framework Analytics</p>
+                    </div>
+                    <button onclick="location.reload()" class="bg-gray-800 text-white px-5 py-2 rounded-lg text-xs font-bold hover:bg-black transition shadow">EXIT SUITE SESSION</button>
+                </div>
+
+                <div id="solution-control-dashboard" class="bg-white p-6 rounded-xl shadow border border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex flex-col gap-0.5">
+                        <span class="text-xs font-bold text-gray-800 uppercase tracking-wide">Interactive Examination Review Workspace</span>
+                        <p class="text-[11px] text-gray-400">Toggle analysis parameters to view solution grids or perform practice answers.</p>
+                    </div>
+                    <div class="flex items-center gap-4 bg-gray-50 p-2.5 rounded-lg border border-gray-200 text-xs font-bold text-gray-600">
+                        <label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="solutionModeRouter" value="retest" checked onchange="toggleReviewExecutionMode('retest')"> RETEST WORKSPACE</label>
+                        <label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="solutionModeRouter" value="solution" onchange="toggleReviewExecutionMode('solution')"> SOLUTION SCHEMATIC KEY</label>
+                    </div>
+                    <button onclick="initializeSolutionReviewWorkspace()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-6 py-2.5 rounded-lg transition shadow">LAUNCH REVIEW EXHAUST</button>
+                </div>
+
+                <div id="score-list" class="space-y-6"></div>
+                <div class="bg-white p-6 rounded-xl shadow border border-gray-200"><h3 class="text-xs font-bold text-gray-700 tracking-wide uppercase mb-4">Sectional Execution Radial Vector Timeline Graph</h3><div class="w-full h-64"><canvas id="performanceMetricsChart"></canvas></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="registrationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border">
+        <div class="bg-blue-900 text-white p-4 font-bold text-xs uppercase tracking-widest flex justify-between items-center"><span>Candidate Registration Matrix</span><button onclick="closeRegistrationModal()" class="text-lg hover:text-gray-300">&times;</button></div>
+        <div class="p-6 space-y-3 text-xs">
+            <div><label class="block font-bold text-gray-600 mb-0.5">FULL STUDENT NAME</label><input type="text" id="regName" placeholder="Enter full name" class="w-full p-2 border rounded"></div>
+            <div><label class="block font-bold text-gray-600 mb-0.5">CONTACT MOBILE NUMBER</label><input type="text" id="regMobile" placeholder="Enter 10 digit number" class="w-full p-2 border rounded"></div>
+            <div><label class="block font-bold text-gray-600 mb-0.5">EMAIL ACCOUNT ADDRESS</label><input type="email" id="regEmail" placeholder="student@gmail.com" class="w-full p-2 border rounded"></div>
+            <div>
+                <label class="block font-bold text-gray-600 mb-0.5">PAYMENT SCREENSHOT IMAGE ARCHIVE</label>
+                <input type="file" id="regScreenshotFile" accept="image/*" class="w-full p-1.5 border rounded text-[11px] text-gray-500 bg-gray-50">
+            </div>
+            <button onclick="processCandidateRegistrationSubmission()" id="regSubmitBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded text-xs uppercase tracking-wider transition shadow">TRANSMIT CREDENTIALS</button>
+        </div>
+    </div>
+</div>
+
+<div id="adminModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden border">
+        <div class="bg-blue-900 text-white px-6 py-4 flex justify-between items-center"><h3 class="font-bold text-xs uppercase tracking-widest">SYSTEM MANAGEMENT CONTROL ENVIRONMENT</h3><button onclick="closeAdminModal()" class="text-xl font-bold hover:text-gray-300">&times;</button></div>
+        <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
+            
+            <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                <span class="block font-bold text-blue-900 mb-2 uppercase tracking-wide">📦 INSTANT CENTRALIZED LINK INFRASTRUCTURE MATRIX</span>
+                <div class="grid grid-cols-1 gap-2 text-[11px]">
+                    <div><strong>SYSTEM DEPLOYED BACKEND WEB APP EXTENSION LINK:</strong> <a id="lnkBackend" href="#" target="_blank" class="text-blue-600 underline break-all">Link</a></div>
+                    <div><strong>CENTRAL MARK SHEET DISPATCH DATABASE:</strong> <a id="lnkMarkSheet" href="#" target="_blank" class="text-blue-600 underline break-all">Link</a></div>
+                    <div><strong>STUDENT REGISTRATION AND MASTER ROSTER SHEET:</strong> <a id="lnkRoster" href="#" target="_blank" class="text-blue-600 underline break-all">Link</a></div>
+                    <div><strong>GLOBAL EXAMINATION TIMING SETUP CONFIGS SHEET:</strong> <a id="lnkSettings" href="#" target="_blank" class="text-blue-600 underline break-all">Link</a></div>
+                </div>
+            </div>
+
+            <div class="bg-amber-50 p-3 rounded-lg border border-amber-300">
+                <span class="block font-bold text-amber-900 mb-1">🔄 PULL AND SYNC INTEGRATED TIMING ENGINE MATRIX</span>
+                <input type="text" id="cfgSettingsSheetLink" value="https://docs.google.com/spreadsheets/d/1Rg6rsvLuY8Kcxp9ro1WuwNzRM779KAzbwVUp-RS3dAE/edit?usp=sharing" class="w-full p-2 border font-mono text-[10px] rounded bg-white">
+                <button type="button" onclick="syncPlatformPropertiesFromCloudSheet()" class="mt-2 w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 rounded transition">PULL ALL SYSTEM EXAMS FROM GOOGLE SHEETS</button>
+            </div>
+
+            <div class="border p-4 rounded-lg bg-gray-50 space-y-3">
+                <div class="flex justify-between items-center border-b pb-1"><span class="font-bold text-gray-700 uppercase">ADD NEW LIVE MANUALLY OVERRIDDEN TEST CONTEXT</span><button onclick="addCustomExamToLocalManagementArray()" class="bg-blue-600 text-white font-bold px-3 py-1 rounded text-[10px] hover:bg-blue-700">+ ADD RECORD</button></div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse" id="tblExamsConfigModifier">
+                        <thead><tr class="border-b text-gray-500 font-bold text-[10px]"><th class="pb-1">EXAM NAME</th><th class="pb-1">QUESTION SHEET ID</th><th class="pb-1">MODE</th><th class="pb-1">A/B/C/D MINS</th><th class="pb-1 text-right">ACTION</th></tr></thead>
+                        <tbody class="divide-y text-[11px]" id="adminExamsConfigTableBody"></tbody>
+                    </table>
+                </div>
+                <button onclick="commitLocalConfigTableToOnlineGoogleSheetDatabase()" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-black py-2.5 rounded tracking-wide shadow">🚀 UPDATE DRIVER CLOUD SHEET PERMANENTLY</button>
+            </div>
+
+            <div class="border p-4 rounded-lg bg-gray-50">
+                <span class="block font-bold text-gray-700 uppercase border-b pb-1 mb-2">📥 REGISTERED USERS PENDING APPROVAL LIST</span>
+                <div class="overflow-x-auto max-h-40">
+                    <table class="w-full text-left border-collapse text-[11px]">
+                        <thead><tr class="border-b text-gray-500"><th class="pb-1">TIMESTAMP</th><th>NAME</th><th>MOBILE / EMAIL</th><th class="pb-1 text-right">SCREENSHOT LINK</th></tr></thead>
+                        <tbody id="adminRegistrationsTableBody" class="divide-y text-gray-600"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="p-4 bg-gray-50 border-t flex justify-end"><button onclick="closeAdminModal()" class="bg-gray-400 text-white font-bold px-6 py-2 rounded hover:bg-gray-500">EXIT VISUALIZER</button></div>
+    </div>
+</div>
+
+<script>
+const CENTRAL_MARK_SHEET_URL = "https://script.google.com/macros/s/AKfycbwQ6ZQ2lvgo2gc386sXJXodrdiCmC18sYTikRpyxdxx0Oczx1_vKPx8k53ej8m55G3z/exec";
+
+let CFG = { sheetId: "1rYBxKsKPxXLNUq5yiaSkefJZYx20tS6irg1j8lbzkh4", examLabel: "SSC", timeType: "sectional", limits: { A: 15, B: 15, C: 15, D: 15, total: 60 }, activeParts: ['A', 'B', 'C', 'D'] };
+let EXAM = { data: { A:[], B:[], C:[], D:[] } };
+let SESSION = { name: "", roll: "", sec: 'A', idx: 0, answers: {}, status: {}, timeLeft: 900, isActive: false, sectionTimesUsed: { A:0, B:0, C:0, D:0 } };
+let HISTORY = []; let STUDENT_ROSTER = []; let currentSyncIndex = 0; let temporaryCloudData = {}; let activeReviewMode = 'retest'; let cachedOnlineProgress = null; let LOCAL_EXAMS_REGISTRY = [];
+
+window.addEventListener('DOMContentLoaded', () => {
+    autoStreamRosterFromCloudPipeline();
+    setupExamTypeTriggerSync();
+});
+
+function autoStreamRosterFromCloudPipeline() {
+    const selectBox = document.getElementById('candSelectBox');
+    fetch(`${CENTRAL_MARK_SHEET_URL}?fetchRoster=true`)
+    .then(res => res.json())
+    .then(data => {
+        STUDENT_ROSTER = data;
+        selectBox.innerHTML = '<option value="">-- SELECT CANDIDATE MOCK PROFILE --</option>';
+        data.forEach((student, idx) => {
+            selectBox.innerHTML += `<option value="${idx}">${student.ROLL} - ${student.NAME}</option>`;
+        });
+        document.getElementById('rosterStatusLabel').innerText = "ONLINE READY";
+        document.getElementById('rosterStatusLabel').className = "text-[10px] bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded";
+    })
+    .catch(() => {
+        selectBox.innerHTML = '<option value="">-- SYSTEM ROSTER RETRIEVAL FAULT --</option>';
+    });
+}
+
+function openRegistrationModal() { document.getElementById('registrationModal').classList.remove('hidden'); }
+function closeRegistrationModal() { document.getElementById('registrationModal').classList.add('hidden'); }
+
+function processCandidateRegistrationSubmission() {
+    let name = document.getElementById('regName').value.trim();
+    let mobile = document.getElementById('regMobile').value.trim();
+    let email = document.getElementById('regEmail').value.trim();
+    let fileInput = document.getElementById('regScreenshotFile');
+    let submitBtn = document.getElementById('regSubmitBtn');
+
+    if(!name || !mobile || !email) return alert("VALIDATION ERROR: ALL FIELDS REQUIRED.");
+    
+    submitBtn.innerText = "UPLOADING TRANSACTION SCREENSHOT... ⏳";
+    submitBtn.disabled = true;
+
+    let payload = { action: "registerUser", regName: name, regMobile: mobile, regEmail: email, imageBytes: "", imageName: "", imageMime: "" };
+
+    if (fileInput.files.length > 0) {
+        let file = fileInput.files[0];
+        let reader = new FileReader();
+        reader.onload = function(evt) {
+            let base64 = evt.target.result.split(',')[1];
+            payload.imageBytes = base64;
+            payload.imageName = file.name;
+            payload.imageMime = file.type;
+            transmitRegistrationData(payload);
+        };
+        reader.readAsDataURL(file);
+    } else {
+        transmitRegistrationData(payload);
+    }
+}
+
+function transmitRegistrationData(payload) {
+    fetch(CENTRAL_MARK_SHEET_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    })
+    .then(() => {
+        alert("REGISTRATION DATA DISPATCHED SUCCESSFULLY! System admin will activate your roll inside your master sheet shortly.");
+        document.getElementById('regName').value = "";
+        document.getElementById('regMobile').value = "";
+        document.getElementById('regEmail').value = "";
+        document.getElementById('regScreenshotFile').value = "";
+        closeRegistrationModal();
+        document.getElementById('regSubmitBtn').innerText = "TRANSMIT CREDENTIALS";
+        document.getElementById('regSubmitBtn').disabled = false;
+    })
+    .catch(() => {
+        alert("TRANSMISSION FAULT METRIC INTERCEPTED.");
+        document.getElementById('regSubmitBtn').disabled = false;
+    });
+}
+
+function openAdminSettingsModal() {
+    let pass = prompt("ENTER MASTER SYSTEM ADMIN SECURITY KEY PASSWORD:");
+    if (pass === "2209@harisH") {
+        fetch(`${CENTRAL_MARK_SHEET_URL}?fetchAdminSettings=true`)
+        .then(res => res.json())
+        .then(cloudConfigData => {
+            LOCAL_EXAMS_REGISTRY = cloudConfigData.exams || [];
+            document.getElementById('lnkBackend').href = CENTRAL_MARK_SHEET_URL;
+            document.getElementById('lnkBackend').innerText = CENTRAL_MARK_SHEET_URL;
+            document.getElementById('lnkMarkSheet').href = cloudConfigData.centralSheet;
+            document.getElementById('lnkMarkSheet').innerText = cloudConfigData.centralSheet;
+            document.getElementById('lnkRoster').href = cloudConfigData.rosterSheet;
+            document.getElementById('lnkRoster').innerText = cloudConfigData.rosterSheet;
+            document.getElementById('lnkSettings').href = cloudConfigData.settingsSheet;
+            document.getElementById('lnkSettings').innerText = cloudConfigData.settingsSheet;
+            
+            renderAdminExamsConfigTableRows();
+            
+            let regHtml = '';
+            (cloudConfigData.registrations || []).forEach(r => {
+                regHtml += `<tr class="border-b"><td class="py-1">${new Date(r.ts).toLocaleDateString()}</td><td class="font-bold text-gray-800">${r.name}</td><td>${r.mobile}<br>${r.email}</td><td class="text-right"><a href="${r.url}" target="_blank" class="text-blue-500 font-bold underline">VIEW SCREENSHOT 👁️</a></td></tr>`;
+            });
+            document.getElementById('adminRegistrationsTableBody').innerHTML = regHtml || '<tr><td colspan="4" class="p-2 text-center text-gray-400">NO NEW REGISTRATIONS REGISTERED</td></tr>';
+            document.getElementById('adminModal').classList.remove('hidden');
+        })
+        .catch(() => alert("SERVER SYSTEM TIMEOUT ERROR."));
+    } else {
+        alert("ACCESS DENIED: INCORRECT PASSWORD PRIVILEGES PIN.");
+    }
+}
+
+function closeAdminModal() { document.getElementById('adminModal').classList.add('hidden'); }
+
+function renderAdminExamsConfigTableRows() {
+    let html = '';
+    LOCAL_EXAMS_REGISTRY.forEach((ex, idx) => {
+        html += `<tr class="border-b">
+            <td class="py-1"><input type="text" class="p-1 border text-xs font-bold w-20" value="${ex.name}" onchange="LOCAL_EXAMS_REGISTRY[${idx}].name=this.value"></td>
+            <td><input type="text" class="p-1 border text-[10px] font-mono w-44" value="${ex.sheetId}" onchange="LOCAL_EXAMS_REGISTRY[${idx}].sheetId=this.value"></td>
+            <td>
+                <select class="p-1 border text-[10px]" onchange="LOCAL_EXAMS_REGISTRY[${idx}].mode=this.value">
+                    <option value="sectional" ${ex.mode==='sectional'?'selected':''}>SEC</option>
+                    <option value="overall" ${ex.mode==='overall'?'selected':''}>OVERALL</option>
+                </select>
+            </td>
+            <td><span class="text-[10px] text-gray-500 font-bold">A:${ex.A}m|B:${ex.b}m|C:${ex.c}m|D:${ex.d}m|Tot:${ex.total}m</span></td>
+            <td class="text-right"><button onclick="LOCAL_EXAMS_REGISTRY.splice(${idx},1); renderAdminExamsConfigTableRows();" class="text-red-500 font-bold hover:underline">DELETE</button></td>
+        </tr>`;
+    });
+    document.getElementById('adminExamsConfigTableBody').innerHTML = html;
+}
+
+function addCustomExamToLocalManagementArray() {
+    LOCAL_EXAMS_REGISTRY.push({ name: "NEW_EXAM", sheetId: "PASTE_SHEET_ID_HERE", mode: "overall", A: 15, b: 15, c: 15, d: 15, total: 60 });
+    renderAdminExamsConfigTableRows();
+}
+
+function commitLocalConfigTableToOnlineGoogleSheetDatabase() {
+    if(!confirm("ARE YOU SURE YOU WANT TO COMMITT ALTERATIONS ONLINE?")) return;
+    fetch(CENTRAL_MARK_SHEET_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "updateSettingsSheet", examsList: LOCAL_EXAMS_REGISTRY })
+    })
+    .then(() => {
+        alert("CLOUD SHEET SYNC COMPLETED PROPERTIES WRITTEN.");
+        location.reload();
+    });
+}
+
+function syncPlatformPropertiesFromCloudSheet() {
+    let rawUrl = document.getElementById('cfgSettingsSheetLink').value.trim();
+    let matches = rawUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    if (!matches) return alert("ERROR: INVALID URL STRUCTURE ID.");
+    let settingsSheetId = matches[1];
+
+    window.settingsDocCallback = function(data) {
+        try {
+            let rows = data.table.rows;
+            let selector = document.getElementById('examSetupTypeSelector');
+            rows.forEach((r, idx) => {
+                if (idx === 0 || !r.c || !r.c[0]) return;
+                let examName = String(r.c[0].v).trim();
+                let sId = String(r.c[1].v).trim();
+                let tMode = r.c[2] ? String(r.c[2].v).trim().toLowerCase() : "overall";
+                let tA = r.c[3] ? parseInt(r.c[3].v) || 0 : 0;
+                let tB = r.c[4] ? parseInt(r.c[4].v) || 0 : 0;
+                let tC = r.c[5] ? parseInt(r.c[5].v) || 0 : 0;
+                let tD = r.c[6] ? parseInt(r.c[6].v) || 0 : 0;
+                let tot = r.c[7] ? parseInt(r.c[7].v) || 0 : 0;
+
+                let activeParts = ['A', 'B', 'C', 'D'];
+                if (examName.toUpperCase() === "RRB" || examName.toUpperCase() === "IBPS CLERK" || tD === 0) { activeParts = ['A', 'B', 'C']; }
+                let limits = (tMode === "overall") ? { total: tot || 60, A:tA, B:tB, C:tC, D:tD } : { A: tA, B: tB, C: tC, D: tD, total: (tA+tB+tC+tD) };
+
+                let existingOpt = Array.from(selector.options).find(o => o.value.toUpperCase() === examName.toUpperCase());
+                if (!existingOpt) {
+                    let newOpt = document.createElement('option');
+                    newOpt.value = examName.toUpperCase();
+                    newOpt.text = examName.toUpperCase() + " [CLOUD ENGINE LINK]";
+                    newOpt.dataset.sheetid = sId;
+                    newOpt.dataset.timetype = tMode;
+                    newOpt.dataset.limits = JSON.stringify(limits);
+                    newOpt.dataset.activeparts = JSON.stringify(activeParts);
+                    selector.appendChild(newOpt);
+                }
+            });
+            alert("SUCCESS: LINK PARAMS LOADED.");
+        } catch(e) { alert("PARSING CONTEXT EXCEPTION DETECTED: " + e.message); }
+    };
+    let scriptUrl = `https://docs.google.com/spreadsheets/d/${settingsSheetId}/gviz/tq?tqx=responseHandler:settingsDocCallback`;
+    let oldScript = document.getElementById('gSettingsScript'); if (oldScript) oldScript.remove();
+    let script = document.createElement('script'); script.id = 'gSettingsScript'; script.src = scriptUrl;
+    document.head.appendChild(script);
+}
+
+function setupExamTypeTriggerSync() {
+    document.getElementById('examSetupTypeSelector').addEventListener('change', (e) => {
+        let selectedValue = e.target.value;
+        if (selectedValue === "SSC") loadPresetParams('ssc-sec');
+        else if (selectedValue === "RRB") loadPresetParams('rrb');
+        else if (selectedValue === "IBPS CLERK") loadPresetParams('ibps');
+        else {
+            let opt = e.target.options[e.target.selectedIndex];
+            if(opt && opt.dataset.sheetid) {
+                CFG.examLabel = selectedValue; CFG.sheetId = opt.dataset.sheetid; CFG.timeType = opt.dataset.timetype;
+                CFG.limits = JSON.parse(opt.dataset.limits); CFG.activeParts = JSON.parse(opt.dataset.activeparts);
+                if(CFG.timeType === 'overall') { document.getElementById('cfgTimeTypeOverall').checked = true; } else { document.getElementById('cfgTimeTypeSectional').checked = true; }
+            }
+        }
+    });
+}
+
+function escapeHtmlString(stringText) {
+    if(!stringText) return "";
+    let clean = stringText.toString();
+    clean = clean.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+    return clean;
+}
+
+function formatFormulaNotation(text) {
+    if (!text) return "";
+    let formatted = text.toString();
+    formatted = formatted.replace(/\\n/g, "<br>");
+    formatted = formatted.replace(/\^([a-zA-Z0-9°\-]+)/g, "<sup>$1</sup>");
+    formatted = formatted.replace(/sqrt\(([^)]+)\)/g, "<span style='border-top:1px solid #000; padding-top:1px;'><span style='font-family:sans-serif;'>&radic;</span>$1</span>");
+    return formatted;
+}
+
+function formatContentWithImages(text) {
+    if (!text) return "";
+    let inlineHandled = formatFormulaNotation(text);
+    if (inlineHandled.includes("<img") && inlineHandled.includes("src=")) return inlineHandled; 
+    const urlPattern = /(https?:\/\/[^\s]+)/g;
+    const match = inlineHandled.match(urlPattern);
+    let processedText = inlineHandled; let imagesHtml = "";
+    if (match) {
+        match.forEach(url => {
+            const cleanUrl = url.split(/[?#]/)[0];
+            if (/\.(jpeg|jpg|gif|png|webp)$/i.test(cleanUrl)) {
+                processedText = processedText.replace(url, ""); 
+                imagesHtml += `<img src="${url}" class="max-h-32 object-contain rounded border border-gray-300 mt-2 bg-white mx-auto" alt="Asset Graph">`;
+            }
+        });
+    }
+    return `<div>${processedText}</div>${imagesHtml}`;
+}
+
+function executeUnifiedLoginSequence() {
+    const selectBox = document.getElementById('candSelectBox');
+    const passInput = document.getElementById('studentPasswordInput').value.trim();
+    const loginBtn = document.getElementById('mainLoginBtn');
+    if(!selectBox.value) return alert("VALIDATION EXCEPTION: CHOOSE PROFILE.");
+    if(!passInput) return alert("VALIDATION EXCEPTION: FIELD REQUIRED.");
+    
+    const record = STUDENT_ROSTER[parseInt(selectBox.value)];
+    if(String(record.PASS).trim() !== passInput) return alert("SECURITY EXCEPTION: INCORRECT PIN PASSWORD PROFILE ACCESS.");
+    
+    SESSION.name = record.NAME; SESSION.roll = record.ROLL;
+    loginBtn.innerText = "STREAMING TESTING SUITE SHEET... ⏳"; loginBtn.disabled = true;
+
+    fetch(`${CENTRAL_MARK_SHEET_URL}?roll=${encodeURIComponent(SESSION.roll)}`)
+    .then(res => res.json())
+    .then(onlineResult => {
+        if (onlineResult && onlineResult.found) { cachedOnlineProgress = onlineResult; document.getElementById('resume-alert-box').classList.remove('hidden'); } 
+        else { cachedOnlineProgress = null; document.getElementById('resume-alert-box').classList.add('hidden'); }
+        temporaryCloudData = { A:[], B:[], C:[], D:[] }; currentSyncIndex = 0;
+        fetchTabViaScript(CFG.sheetId, "Part A", "A");
+    })
+    .catch(() => {
+        cachedOnlineProgress = null; temporaryCloudData = { A:[], B:[], C:[], D:[] }; currentSyncIndex = 0;
+        fetchTabViaScript(CFG.sheetId, "Part A", "A");
+    });
+}
+
+function fetchTabViaScript(sheetId, tabName, partKey) {
+    const oldScript = document.getElementById('gSheetSyncScript'); if (oldScript) oldScript.remove();
+    window.googleDocCallback = function(data) { handleCloudTabResponse(data, partKey, sheetId); };
+    const scriptUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:googleDocCallback&sheet=${encodeURIComponent(tabName)}`;
+    const script = document.createElement('script'); script.id = 'gSheetSyncScript'; script.src = scriptUrl;
+    script.onerror = function() { alert("SPREADSHEET EXTRACTION FAULT."); resetLoginBtn(); };
+    document.head.appendChild(script);
+}
+
+function handleCloudTabResponse(response, partKey, sheetId) {
+    try {
+        if (!response || !response.table) throw new Error("Empty matrix.");
+        const rows = response.table.rows; let headerMap = {};
+        response.table.cols.forEach((col, idx) => { headerMap[idx] = (col.label || col.id || "").toLowerCase().replace(/\s/g, ''); });
+
+        const parsedRows = rows.map(r => {
+            let rowObj = {}; if(!r || !r.c) return rowObj;
+            r.c.forEach((cell, idx) => {
+                let val = cell && cell.v !== null && cell.v !== undefined ? String(cell.v) : "";
+                let header = headerMap[idx] || "";
+                if (['a','b','c','d','e','f'].includes(header) || !header) {
+                    if (idx === 0) rowObj["question"] = val;
+                    else if (idx === 1) rowObj["option1"] = val;
+                    else if (idx === 2) rowObj["option2"] = val;
+                    else if (idx === 3) rowObj["option3"] = val;
+                    else if (idx === 4) rowObj["option4"] = val;
+                    else if (idx === 5) rowObj["answer"] = val;
+                } else { rowObj[header] = val; }
+            });
+            return {
+                Question: normalizeKey(rowObj, "question"), "Option 1": normalizeKey(rowObj, "option1") || normalizeKey(rowObj, "optiona"), "Option 2": normalizeKey(rowObj, "option2") || normalizeKey(rowObj, "optionb"),
+                "Option 3": normalizeKey(rowObj, "option3") || normalizeKey(rowObj, "optionc"), "Option 4": normalizeKey(rowObj, "option4") || normalizeKey(rowObj, "optiond"), Answer: normalizeKey(rowObj, "answer")
+            };
+        });
+        if (parsedRows.length > 0 && parsedRows[0].Question.toLowerCase().replace(/\s/g, '').includes("question")) parsedRows.shift();
+        temporaryCloudData[partKey] = parsedRows;
+        
+        const order = ['A', 'B', 'C', 'D']; const names = ['Part A', 'Part B', 'Part C', 'Part D']; currentSyncIndex++;
+        if (currentSyncIndex < 4) { fetchTabViaScript(sheetId, names[currentSyncIndex], order[currentSyncIndex]); } 
+        else {
+            EXAM.data = temporaryCloudData; document.getElementById('user-display').innerText = `${SESSION.roll} - ${SESSION.name}`;
+            let details = `Target Format Type: ${CFG.examLabel} Platform Core Config -- `;
+            details += (CFG.timeType === 'overall') ? `Timer Setup: ${CFG.limits.total} Mins.` : `Interval Timing Blocks: Part A (${CFG.limits.A}m), Part B (${CFG.limits.B}m), Part C (${CFG.limits.C}m), Part D (${CFG.limits.D}m).`;
+            document.getElementById('active-configuration-summary').innerHTML = details;
+            resetLoginBtn(); showStep('step-instructions');
+        }
+    } catch (err) { alert("MATRIX COMPILING ERROR."); resetLoginBtn(); }
+}
+
+function normalizeKey(obj, target) {
+    const keys = Object.keys(obj);
+    const found = keys.find(k => k.toLowerCase().replace(/\s/g, '') === target.toLowerCase().replace(/\s/g, ''));
+    return found ? obj[found] : "";
+}
+
+function setupExamTimerInitialState() {
+    if (CFG.timeType === 'overall') {
+        let fb = parseInt(CFG.limits.total); SESSION.timeLeft = (isNaN(fb) ? 60 : fb) * 60;
+    } else {
+        let fb = parseInt(CFG.limits[SESSION.sec]); SESSION.timeLeft = (isNaN(fb) ? 15 : fb) * 60;
+    }
+}
+
+function startExam() {
+    document.getElementById('live-platform-title').innerText = `${CFG.examLabel} SEAMLESS TESTING ENGINE CORE ENVIRONMENT`;
+    ['A','B','C','D'].forEach(p => {
+        const btn = document.getElementById(`btn-${p}`);
+        if (!CFG.activeParts.includes(p)) btn.classList.add('hidden'); else btn.classList.remove('hidden');
+    });
+
+    if (cachedOnlineProgress) {
+        SESSION.sec = cachedOnlineProgress.sec; SESSION.idx = cachedOnlineProgress.idx;
+        SESSION.answers = cachedOnlineProgress.answers || {}; SESSION.status = cachedOnlineProgress.status || {};
+        SESSION.timeLeft = cachedOnlineProgress.timeLeft; SESSION.sectionTimesUsed = cachedOnlineProgress.sectionTimesUsed || { A:0, B:0, C:0, D:0 };
+    } else {
+        SESSION.sec = CFG.activeParts[0]; setupExamTimerInitialState();
+    }
+    SESSION.isActive = true; showStep('exam-interface'); switchSec(SESSION.sec);
+    setInterval(timerTickEngine, 1000);
+}
+
+function dispatchProgressToCloudServer() {
+    if(!SESSION.isActive) return;
+    fetch(CENTRAL_MARK_SHEET_URL, {
+        method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "backupProgress", roll: SESSION.roll, name: SESSION.name, sec: SESSION.sec, idx: SESSION.idx, timeLeft: SESSION.timeLeft, answers: SESSION.answers, status: SESSION.status, sectionTimesUsed: SESSION.sectionTimesUsed })
+    }).catch(() => console.log("Cloud sync buffer lag..."));
+}
+
+function timerTickEngine() {
+    if(!SESSION.isActive) return;
+    SESSION.timeLeft--; SESSION.sectionTimesUsed[SESSION.sec]++;
+    if (SESSION.timeLeft % 5 === 0) dispatchProgressToCloudServer();
+
+    const h = Math.floor(SESSION.timeLeft/3600), m = Math.floor((SESSION.timeLeft%3600)/60), s = SESSION.timeLeft%60;
+    document.getElementById('timer').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    
+    if(SESSION.timeLeft <= 0) {
+        if(CFG.timeType === 'sectional') {
+            const idx = CFG.activeParts.indexOf(SESSION.sec);
+            if(idx + 1 < CFG.activeParts.length) {
+                alert("BLOCK TIMEOUT EXPIRED. SWAPPING BLOCK SEGMENTS.");
+                SESSION.sec = CFG.activeParts[idx+1]; SESSION.idx = 0;
+                SESSION.timeLeft = (parseInt(CFG.limits[SESSION.sec]) || 15) * 60; switchSec(SESSION.sec);
+            } else { finalSubmit(); }
+        } else { finalSubmit(); }
+    }
+}
+
+function switchSec(s) {
+    if(SESSION.isActive && CFG.timeType === 'sectional' && SESSION.sec !== s) return alert("LOCKOUT: CROSS TIMING ACCESS RESTRICTED.");
+    SESSION.sec = s;
+    CFG.activeParts.forEach(p => { document.getElementById(`btn-${p}`).className = `px-6 py-3 border-r border-blue-800 uppercase ${CFG.timeType==='sectional'&&p!==s?'disabled-tab':''}`; });
+    document.getElementById(`btn-${s}`).classList.add('active-sec');
+    const titles = {A:"PART A: GENERAL INTELLIGENCE", B:"PART B: GENERAL AWARENESS", C:"PART C: QUANTITATIVE APTITUDE", D:"PART D: GENERAL ENGLISH"};
+    document.getElementById('sec-title').innerText = titles[s] || "EXAM SEGMENT MODULE";
+    loadQuestion();
+}
+
+function loadQuestion() {
+    const q = EXAM.data[SESSION.sec][SESSION.idx]; if(!q) return;
+    document.getElementById('q-num').innerText = SESSION.idx + 1;
+    document.getElementById('q-body').innerHTML = formatContentWithImages(q.Question);
+    
+    let html = ''; const prefixes = ['A', 'B', 'C', 'D'];
+    ['Option 1', 'Option 2', 'Option 3', 'Option 4'].forEach((opt, index) => {
+        const choiceValue = q[opt] || ""; const isSel = SESSION.answers[`${SESSION.sec}_${SESSION.idx}`] === choiceValue;
+        const processedView = formatContentWithImages(choiceValue); let escapedValue = escapeHtmlString(choiceValue);
+        
+        html += `
+            <div class="p-4 border border-gray-200 rounded-lg bg-white flex items-start gap-4 transition hover:border-gray-300">
+                <div class="pt-1">
+                    <input type="radio" id="rad_${SESSION.sec}_${SESSION.idx}_${index}" name="exam_radio_group" value="${index}" ${isSel?'checked':''} onclick="handleRadioInteractionMechanism(event, \`${escapedValue}\`)" class="w-4 h-4 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                </div>
+                <label for="rad_${SESSION.sec}_${SESSION.idx}_${index}" class="flex-grow cursor-pointer text-gray-700 select-none"><span class="font-bold text-blue-900 mr-1">(${prefixes[index]})</span> ${processedView}</label>
+            </div>`;
+    });
+    document.getElementById('opt-list').innerHTML = html; renderPalette();
+}
+
+function handleRadioInteractionMechanism(event, parsedOptionValue) {
+    const currentSelectedValue = SESSION.answers[`${SESSION.sec}_${SESSION.idx}`];
+    if (currentSelectedValue && escapeHtmlString(currentSelectedValue) === parsedOptionValue) {
+        event.target.checked = false; delete SESSION.answers[`${SESSION.sec}_${SESSION.idx}`];
+    } else {
+        const q = EXAM.data[SESSION.sec][SESSION.idx]; let foundValue = "";
+        ['Option 1', 'Option 2', 'Option 3', 'Option 4'].forEach(opt => { if(escapeHtmlString(q[opt]) === parsedOptionValue) foundValue = q[opt]; });
+        SESSION.answers[`${SESSION.sec}_${SESSION.idx}`] = foundValue || parsedOptionValue;
+    }
+    dispatchProgressToCloudServer(); loadQuestion();
+}
+
+function saveAndNext() { SESSION.status[`${SESSION.sec}_${SESSION.idx}`] = SESSION.answers[`${SESSION.sec}_${SESSION.idx}`]?'answered':'not-answered'; dispatchProgressToCloudServer(); moveNext(); }
+function markForReview() { SESSION.status[`${SESSION.sec}_${SESSION.idx}`] = SESSION.answers[`${SESSION.sec}_${SESSION.idx}`]?'review-answered':'review'; dispatchProgressToCloudServer(); moveNext(); }
+function moveNext() {
+    if(SESSION.idx < EXAM.data[SESSION.sec].length - 1) { SESSION.idx++; } 
+    else if(CFG.timeType !== 'sectional') {
+        const currIndex = CFG.activeParts.indexOf(SESSION.sec); if(currIndex + 1 < CFG.activeParts.length) { SESSION.idx = 0; switchSec(CFG.activeParts[currIndex+1]); return; }
+    }
+    loadQuestion();
+}
+
+function renderPalette() {
+    const box = document.getElementById('palette-box'); box.innerHTML = '';
+    (EXAM.data[SESSION.sec] || []).forEach((_, i) => { box.innerHTML += `<div onclick="SESSION.idx=${i};loadQuestion()" class="q-btn status-${SESSION.status[`${SESSION.sec}_${i}`] || 'not-visited'} ${SESSION.idx===i?'ring-2 ring-black':''} shadow-sm">${i+1}</div>`; });
+}
+function clearResponse() { delete SESSION.answers[`${SESSION.sec}_${SESSION.idx}`]; delete SESSION.status[`${SESSION.sec}_${SESSION.idx}`]; dispatchProgressToCloudServer(); loadQuestion(); }
+
+function calculateSectionMetrics(secKey) {
+    let answered = 0, correct = 0, wrong = 0, unanswered = 0, score = 0; const questions = EXAM.data[secKey] || [];
+    questions.forEach((q, i) => {
+        if (SESSION.answers[`${secKey}_${i}`]) {
+            answered++; if (String(SESSION.answers[`${secKey}_${i}`]).trim() == String(q.Answer).trim()) { correct++; score += 3; } else { wrong++; score -= 1; }
+        } else { unanswered++; }
+    });
+    return { answered, correct, wrong, unanswered, score };
+}
+
+function finalSubmit() {
+    SESSION.isActive = false; document.getElementById('tab-test-ui').classList.add('hidden'); document.getElementById('tab-score-ui').classList.remove('hidden');
+    document.getElementById('nav-score').disabled = false; document.getElementById('nav-score').classList.remove('disabled-tab');
+    document.getElementById('nav-test').className = "font-bold text-gray-400 px-4 disabled-tab"; document.getElementById('nav-score').className = "font-bold border-b-2 border-blue-600 text-blue-600 px-4";
+
+    const results = {}; ['A','B','C','D'].forEach(p => { results[p] = calculateSectionMetrics(p); });
+    let totalScore = results.A.score + results.B.score + results.C.score + results.D.score;
+    
+    const timestamp = new Date().toLocaleString().toUpperCase();
+    const resultPayload = { 
+        action: "submitFinalTest", DATE: timestamp, NAME: `${SESSION.roll} - ${SESSION.name}`.toUpperCase(), TOTAL_SCORE: totalScore,
+        PART_A_ANSWERED: results.A.answered, PART_A_CORRECT: results.A.correct, PART_A_WRONG: results.A.wrong, PART_A_UNANSWERED: results.A.unanswered, PART_A_SCORE: results.A.score,
+        PART_B_ANSWERED: results.B.answered, PART_B_CORRECT: results.B.correct, PART_B_WRONG: results.B.wrong, PART_B_UNANSWERED: results.B.unanswered, PART_B_SCORE: results.B.score,
+        PART_C_ANSWERED: results.C.answered, PART_C_CORRECT: results.C.correct, PART_C_WRONG: results.C.wrong, PART_C_UNANSWERED: results.C.unanswered, PART_C_SCORE: results.C.score,
+        PART_D_ANSWERED: results.D.answered, PART_D_CORRECT: results.D.correct, PART_D_WRONG: results.D.wrong, PART_D_UNANSWERED: results.D.unanswered, PART_D_SCORE: results.D.score
+    };
+
+    fetch(CENTRAL_MARK_SHEET_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(resultPayload) });
+    renderScoreList(results, totalScore); injectPerformanceMatrixCharts(results); alert("EXAMINATION RECORD TRANSMITTED.");
+}
+
+function renderScoreList(results, totalScore) {
+    let tableRows = '';
+    ['A','B','C','D'].forEach(p => {
+        const res = results[p]; const mins = Math.floor(SESSION.sectionTimesUsed[p] / 60); const secs = SESSION.sectionTimesUsed[p] % 60;
+        tableRows += `<tr><td class="p-3 font-extrabold text-blue-900">PART ${p}</td><td class="p-3 text-center">${res.answered}</td><td class="p-3 text-center text-emerald-600">${res.correct}</td><td class="p-3 text-center text-red-600">${res.wrong}</td><td class="p-3 text-center text-gray-400">${res.unanswered}</td><td class="p-3 text-center font-mono text-blue-950 font-bold">${mins}m ${secs}s</td><td class="p-3 text-right font-black text-gray-900">${res.score}</td></tr>`;
+    });
+    document.getElementById('score-list').innerHTML = `<div class="bg-white p-6 rounded-xl shadow border border-gray-200"><div class="flex justify-between items-center border-b pb-3 mb-4"><div><span class="text-xs font-bold text-gray-400 tracking-wide">${new Date().toLocaleString()}</span><h3 class="text-xl font-bold text-blue-950 mt-0.5">${SESSION.roll} - ${SESSION.name}</h3></div><div class="text-right"><span class="text-xs font-bold text-gray-500">AGGREGATE SCORE</span><div class="text-3xl font-black text-emerald-600">${totalScore}</div></div></div><div class="overflow-x-auto"><table class="w-full text-left border-collapse text-xs font-bold"><thead><tr class="bg-blue-900 text-white border-b text-[10px]"><th class="p-3">SECTION</th><th class="p-3 text-center">ANSWERED</th><th class="p-3 text-center">CORRECT</th><th class="p-3 text-center">WRONG</th><th class="p-3 text-center">UNANSWERED</th><th class="p-3 text-center text-amber-300">TIME TRACKED</th><th class="p-3 text-right">POINTS</th></tr></thead><tbody class="divide-y divide-gray-200 text-gray-700">${tableRows}</tbody></table></div></div>`;
+}
+
+function injectPerformanceMatrixCharts(results) {
+    const ctx = document.getElementById('performanceMetricsChart').getContext('2d');
+    new Chart(ctx, { type: 'line', data: { labels: ['Part A', 'Part B', 'Part C', 'Part D'], datasets: [{ label: 'Score Vector', data: ['A','B','C','D'].map(p => results[p].score), borderColor: '#27ae60', backgroundColor: 'rgba(39, 174, 96, 0.1)', tension: 0.1, yAxisID: 'y' }, { label: 'Time Allocated (Mins)', data: ['A','B','C','D'].map(p => Math.floor(SESSION.sectionTimesUsed[p] / 60)), borderColor: '#f39c12', backgroundColor: 'rgba(243, 156, 18, 0.1)', tension: 0.1, yAxisID: 'y1' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { type: 'linear', display: true, position: 'left' }, y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false } } } } });
+}
+
+function toggleReviewExecutionMode(mode) { activeReviewMode = mode; }
+function initializeSolutionReviewWorkspace() {
+    SESSION.sec = 'A'; SESSION.idx = 0; document.getElementById('tab-test-ui').classList.remove('hidden'); document.getElementById('tab-score-ui').classList.add('hidden'); document.getElementById('exam-interface').classList.remove('hidden'); document.getElementById('clear-action-btn').classList.add('hidden');
+    document.getElementById('review-action-btn').className = "bg-gray-800 text-white px-5 py-2 rounded text-xs font-bold"; document.getElementById('review-action-btn').innerText = "⬅ RETURN TO SCORE SHEET";
+    document.getElementById('review-action-btn').onclick = function() { document.getElementById('exam-interface').classList.add('hidden'); document.getElementById('tab-test-ui').classList.add('hidden'); document.getElementById('tab-score-ui').classList.remove('hidden'); };
+    document.getElementById('save-action-btn').innerText = "NEXT QUESTION ➡";
+    document.getElementById('save-action-btn').onclick = function() {
+        if (SESSION.idx < EXAM.data[SESSION.sec].length - 1) { SESSION.idx++; } else {
+            const currentPartIndex = ['A','B','C','D'].indexOf(SESSION.sec); if(currentPartIndex + 1 < 4) { SESSION.sec = ['A','B','C','D'][currentPartIndex+1]; SESSION.idx = 0; switchSec(SESSION.sec); return; } else { alert("END OF DATA COMPILATION."); return; }
+        }
+        renderSolutionQuestionReviewCard();
+    };
+    switchSec(SESSION.sec); renderSolutionQuestionReviewCard();
+}
+
+function renderSolutionQuestionReviewCard() {
+    const q = EXAM.data[SESSION.sec][SESSION.idx]; if(!q) return;
+    document.getElementById('q-num').innerText = SESSION.idx + 1; document.getElementById('q-body').innerHTML = formatContentWithImages(q.Question);
+    const userSelectedAnswer = SESSION.answers[`${SESSION.sec}_${SESSION.idx}`];
+    let html = ''; const prefixes = ['A', 'B', 'C', 'D'];
+
+    ['Option 1', 'Option 2', 'Option 3', 'Option 4'].forEach((opt, index) => {
+        const choiceValue = q[opt] || ""; const processedView = formatContentWithImages(choiceValue);
+        let wrapperClass = "p-4 border border-gray-200 rounded-lg bg-white flex items-start gap-4"; let inputStatus = ""; let escapedValue = escapeHtmlString(choiceValue);
+
+        if (activeReviewMode === 'retest') {
+            if (userSelectedAnswer === choiceValue) { wrapperClass = "p-4 border-2 border-blue-500 bg-blue-50 rounded-lg flex items-start gap-4 font-bold"; inputStatus = "checked"; }
+            html += `<div class="${wrapperClass}"><div class="pt-1"><input type="radio" id="sol_rad_${index}" name="sol_radio_grp" ${inputStatus} onclick="handleRadioInteractionMechanism(event, \`${escapedValue}\`); renderSolutionQuestionReviewCard();" class="w-4 h-4 text-blue-600 cursor-pointer"></div><label for="sol_rad_${index}" class="flex-grow cursor-pointer select-none"><span class="font-bold text-blue-900">(${prefixes[index]})</span> ${processedView}</label></div>`;
+        } else {
+            const isCorrect = String(choiceValue).trim() === String(q.Answer).trim(); const isSelected = userSelectedAnswer === choiceValue;
+            if (isCorrect) { wrapperClass = "correct-eclipse p-4 flex items-start gap-4"; inputStatus = "checked"; } else if (isSelected) { wrapperClass = "wrong-eclipse p-4 flex items-start gap-4"; inputStatus = "checked"; }
+            html += `<div class="${wrapperClass}"><div class="pt-1"><input type="radio" disabled ${inputStatus} class="w-4 h-4"></div><div class="flex-grow select-none"><span class="font-bold text-blue-900">(${prefixes[index]})</span> ${processedView} ${isCorrect ? '<span class="ml-2 text-xs text-green-700 font-extrabold">[VALID KEY]</span>':''} ${isSelected && !isCorrect ? '<span class="ml-2 text-xs text-red-700 font-extrabold">[WRONG SELECTION]</span>':''}</div></div>`;
+        }
+    });
+    document.getElementById('opt-list').innerHTML = html;
+    const box = document.getElementById('palette-box'); box.innerHTML = '';
+    (EXAM.data[SESSION.sec] || []).forEach((_, i) => { box.innerHTML += `<div onclick="SESSION.idx=${i};renderSolutionQuestionReviewCard();" class="q-btn status-${SESSION.status[`${SESSION.sec}_${i}`] || 'not-visited'} ${SESSION.idx===i?'ring-2 ring-black':''} shadow-sm">${i+1}</div>`; });
+}
+function loadPresetParams() {}
+function showStep(id) { ['step-upload','step-instructions','step-lang','exam-interface'].forEach(s => document.getElementById(s).classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+</script>
+</body>
+</html>
